@@ -1,0 +1,58 @@
+name: Buildkite Akeyless
+description: Load Akeyless static, dynamic, and rotated secrets into Buildkite (env, ssh-agent, git credentials)
+author: "https://github.com/akeyless-community"
+public: true
+requirements:
+  - bash
+configuration:
+  properties:
+    gateway:
+      type: string
+    path:
+      type: string
+    prefix:
+      type: string
+    secret:
+      type: string
+    debug:
+      type: boolean
+    dump_env:
+      type: boolean
+    include_dynamic_secrets:
+      type: boolean
+      description: "List and fetch dynamic-secret items (default true). Set false to static/rotated only."
+    include_rotated_secrets:
+      type: boolean
+      description: "List and fetch rotated-secret items (default true)."
+    dynamic_secret_timeout:
+      type: number
+      description: "Timeout in seconds for get-dynamic-secret-value (optional)."
+    dynamic_secret_args:
+      type: array
+      items:
+        type: string
+      description: "Optional args for dynamic secret (e.g. CSR); JSON array of strings."
+    rotated_secret_host:
+      type: string
+      description: "Optional Host for get-rotated-secret-value (linked targets)."
+    auth:
+      type: object
+      properties:
+        method:
+          enum:
+            - access_key
+            - aws_iam
+            - jwt
+        access-id:
+          type: string
+        secret-env:
+          type: string
+        jwt-env:
+          type: string
+        access-type:
+          type: string
+      required:
+        - method
+        - access-id
+  required:
+    - auth

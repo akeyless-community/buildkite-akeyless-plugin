@@ -1,0 +1,53 @@
+#!/bin/bash
+set -eu -o pipefail
+
+_source="${BASH_SOURCE[0]}"
+[ -z "${_source:-}" ] && _source="${0}"
+basedir="$( cd "$( dirname "${_source}" )" && cd .. && pwd )"
+
+# shellcheck source=lib/shared.bash
+. "$basedir/lib/shared.bash"
+
+bin="${basedir}/bin/akeyless-bk-secrets"
+if [[ ! -x "$bin" ]]; then
+  if command -v akeyless-bk-secrets >/dev/null 2>&1; then
+    bin="$(command -v akeyless-bk-secrets)"
+  else
+    echo "+++ :warning: akeyless-bk-secrets not found. Build it with: (cd \"${basedir}\" && make build)" >&2
+    exit 1
+  fi
+fi
+
+state_dir="$(mktemp -d "${TMPDIR:-/tmp}/akeyless-bk-secrets.XXXXXX)"
+cleanup() { rm -rf "$state_dir"; }
+trap cleanup EXIT
+
+env_before="$(env | sort)"
+
+echo "~~~ Syncing secrets from Akeyless" >&2
+if ! "$bin" sync "$state_dir"; then
+  exit 1
+fi
+
+if [[ -f "$state_dir/exports.sh" ]]; then
+  # shellcheck disable=SC1090
+  source "$state_dir/exports.sh"
+fi
+
+if [[ -f "$state_dir/env.sh" ]]; then
+  set -o allexport
+  # shellcheck disable=SC1090
+  source "$state_dir/env.sh"
+  set +o allexport
+fi
+
+load_ssh_keys_from_list "$state_dir/ssh-keys.list"
+
+if [[ -n "${AKEYLESS_GIT_CREDENTIAL_SECRET:-}" ]]; then
+  git_credentials=()
+  git_credentials+=("'credential.helper=${basedir}/git-credential-akeyless-secrets'")
+  export GIT_CONFIG_PARAMETERS
+  GIT_CONFIG_PARAMETERS=$(IFS=' '; echo -n "${git_credentials[*]}")
+fi
+
+dump_env_diff
