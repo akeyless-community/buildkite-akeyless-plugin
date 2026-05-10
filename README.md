@@ -95,8 +95,8 @@ steps:
 
 Default Akeyless folder base: `/buildkite` (override with `path`). The plugin scans:
 
-1. `/buildkite/<prefix>/<BUILDKITE_PIPELINE_SLUG>` or `/buildkite/<BUILDKITE_PIPELINE_SLUG>`
-2. `/buildkite` (shared fallback)
+1. Pipeline folder: `/buildkite/{prefix}/{pipeline-slug}` when `prefix` is set, otherwise `/buildkite/{pipeline-slug}` (Buildkite sets `pipeline-slug` from the pipeline).
+2. Shared folder: `/buildkite`
 
 Items are matched by the **last path segment** (static, dynamic, or rotated):
 
